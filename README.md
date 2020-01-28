@@ -62,11 +62,20 @@ Wiki
     2. 
       Windows:
           cd examples\helloworld && .\build.bat
+      Linux:
+          cd examples/helloworld && sh build.sh
 
 运行
 -----
     Windows:
-      目录:examples\helloworld
-      指令:
+       DIR:
+           examples\helloworld
+       CMD:
           .\server.exe
           .\client.exe (可启多个)
+    Linux:
+       DIR:
+           examples/helloworld
+       CMD:
+          ./server.exe
+          ./client.exe (可启多个)
