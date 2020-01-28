@@ -2,7 +2,6 @@ package proto
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 //协议格式: 4字节包头长度 + 内容
@@ -22,7 +21,6 @@ func Unpack(b []byte) (int, []byte) {
 		return 0, nil
 	}
 	bodyLen := int(binary.BigEndian.Uint32(b))
-	fmt.Printf("bodyLen:%d\n", bodyLen)
 	if len(b) < PkgHeadLen + bodyLen { //不够body长度
 		return 0, nil
 	}

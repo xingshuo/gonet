@@ -79,3 +79,11 @@ Wiki
        CMD:
           ./server.exe
           ./client.exe (可启多个)
+
+测试
+-----
+    1.Dialer断线重连机制:
+        Ctrl + C 关闭Server端,观察Client端断线重连失败消息.
+        失败几次后,重新启动Server端,观察断线重连成功消息以及后续前后端心跳包输出
+    2.退出流程(Dialer Shutdown与Listener GracefulStop)
+        前后端皆由Ctrl + C触发,观察输出log是否异常
