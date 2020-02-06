@@ -1,6 +1,6 @@
 //Author: lakefu
 //Date:   2020.1.27
-//Function: Provide Dial Optional Config Parameters
+//Function: Provide dial Optional Config Parameters
 package gonet
 
 type dialOptions struct {
@@ -47,8 +47,8 @@ func WithDialTimeout(n int) DialOption {
 
 func defaultDialOptions() dialOptions {
 	return dialOptions{
-		maxRetryTimes:10,
-		retryInterval:3,
-		dialTimeout:5,
+		maxRetryTimes: 10,
+		retryInterval: 3,
+		dialTimeout:   5,
 	}
 }

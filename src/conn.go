@@ -6,9 +6,9 @@ package gonet
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net"
 	"sync"
-	"log"
 )
 
 type Conn struct {
@@ -128,6 +128,7 @@ func (c *Conn) Send(b []byte) {
 
 func (c *Conn) Close() error { //主动关闭调用
 	if c.close.Fire() {
+		c.receiver.OnClosed(c)
 		c.conn.Close()
 		return nil
 	}
@@ -139,5 +140,5 @@ func (c *Conn) Done() <-chan struct{} {
 }
 
 func (c *Conn) PeerAddr() string {
-	return  c.conn.RemoteAddr().String()
+	return c.conn.RemoteAddr().String()
 }

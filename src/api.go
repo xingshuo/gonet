@@ -3,14 +3,16 @@
 //Function: 对外提供接口
 package gonet
 
-import "sync"
+import (
+	"sync"
+)
 
-func NewDialer(address string, r Receiver, opts ...DialOption) (*Dialer, error) {
+func NewDialer(address string, newReceiver func() Receiver, opts ...DialOption) (*Dialer, error) {
 	d := &Dialer{
-		opts:defaultDialOptions(),
-		address:address,
-		quit:NewEvent("gonet.Dialer.quit"),
-		receiver:r,
+		opts:        defaultDialOptions(),
+		address:     address,
+		quit:        NewEvent("gonet.Dialer.quit"),
+		newReceiver: newReceiver,
 	}
 	//处理参数
 	for _, opt := range opts {
@@ -19,13 +21,13 @@ func NewDialer(address string, r Receiver, opts ...DialOption) (*Dialer, error) 
 	return d, nil
 }
 
-func NewListener(address string, r Receiver) (*Listener, error) {
+func NewListener(address string, newReceiver func() Receiver) (*Listener, error) {
 	l := &Listener{
-		conns:make(map[*Conn]bool),
-		address:address,
-		quit:NewEvent("gonet.Listener.quit"),
-		done:NewEvent("gonet.Listener.done"),
-		receiver:r,
+		conns:       make(map[*Conn]bool),
+		address:     address,
+		quit:        NewEvent("gonet.Listener.quit"),
+		done:        NewEvent("gonet.Listener.done"),
+		newReceiver: newReceiver,
 	}
 	l.cv = sync.NewCond(&l.mu)
 	return l, nil

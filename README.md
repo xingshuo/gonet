@@ -20,6 +20,7 @@ Wiki
 		  type Receiver interface {
 			OnConnected(s Sender) error //连接建立
 			OnMessage(s Sender, b []byte) (n int, err error) //接收消息
+			OnClosed(s Sender) error //连接断开前
 		  }
 		  使用者只需要在创建Dialer或Listener时指定Receiver接口的实例
 
@@ -30,18 +31,19 @@ Wiki
 -----
     Dialer(前端):
       启动:
-        //ClientConnReceiver为Receiver实例
-        d,err := gonet.NewDialer(serverURL, ClientConnReceiver, dialOptions...)
+        //newClientConnReceiver为Receiver实例的工厂函数
+        d,err := gonet.NewDialer(serverURL, newClientConnReceiver, dialOptions...)
         //省略异常处理
         d.Start() //注意:这里不会阻塞,只会返回连接成功或失败.
                   //成功后自动开启断线重连机制,并根据dialOptions控制重试相关参数
+        d.Send("xxxx") //发送消息到Server端
       退出:
         d.Shutdown()
 
     Listener(后端):
       启动:
-        //ServerConnReceiver为Receiver实例
-        l,err := gonet.NewListener(bindURL, ServerConnReceiver)
+        //newServerConnReceiver为Receiver实例的工厂函数
+        l,err := gonet.NewListener(bindURL, newServerConnReceiver)
         //省略异常处理
         l.Serve() //注意:这里会阻塞在socket的Accept循环,为每个新连接启动单独Goroutine处理
       退出:

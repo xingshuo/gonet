@@ -8,18 +8,19 @@ import (
 	"log"
 	"net"
 	"sync"
+
 )
 
 type Listener struct {
-	lis      net.Listener
-	conns    map[*Conn]bool
-	address  string
-	cv       *sync.Cond
-	mu       sync.Mutex
-	quit     *Event
-	done     *Event
-	serveWG  sync.WaitGroup
-	receiver Receiver
+	lis         net.Listener
+	conns       map[*Conn]bool
+	address     string
+	cv          *sync.Cond
+	mu          sync.Mutex
+	quit        *Event
+	done        *Event
+	serveWG     sync.WaitGroup
+	newReceiver func() Receiver
 }
 
 func (l *Listener) addConn(conn *Conn) bool {
@@ -71,7 +72,7 @@ func (l *Listener) handleRawConn(rawConn net.Conn) {
 		return
 	}
 	conn := new(Conn)
-	err := conn.Init(rawConn, l.receiver)
+	err := conn.Init(rawConn, l.newReceiver())
 	if err != nil {
 		log.Printf("OnConnected err:%v\n", err)
 		return
@@ -88,12 +89,14 @@ func (l *Listener) handleRawConn(rawConn net.Conn) {
 //以下为对外提供接口
 func (l *Listener) Serve() error {
 	if l.quit.HasFired() {
-		return fmt.Errorf("serve repeated.")
+		err := fmt.Errorf("serve repeated.")
+		return err
 	}
 	l.mu.Lock()
 	if l.lis != nil {
 		l.mu.Unlock()
-		return fmt.Errorf("serve repeated.")
+		err := fmt.Errorf("serve repeated.")
+		return err
 	}
 	lis, err := net.Listen("tcp", l.address)
 	if err != nil {
@@ -122,7 +125,7 @@ func (l *Listener) Serve() error {
 		}
 		l.mu.Unlock()
 	}()
-	log.Println("Listening on "  + ":" + l.address)
+	log.Println("Listening on " + ":" + l.address)
 	for {
 		rawConn, err := lis.Accept()
 		if err != nil {
@@ -144,7 +147,9 @@ func (l *Listener) Serve() error {
 }
 
 func (l *Listener) GracefulStop() {
-	l.quit.Fire()       //标识开始走正常退出流程,为了不让Serve循环提前退出
+	if !l.quit.Fire() { //标识开始走正常退出流程,为了不让Serve循环提前退出
+		return
+	}
 	defer l.done.Fire() //已经走完正常退出流程,通知退出Serve循环
 	l.mu.Lock()
 	if l.lis == nil { //没调用Serve或Serve流程意外退出了

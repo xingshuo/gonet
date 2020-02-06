@@ -5,22 +5,23 @@ package gonet
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
-	"log"
+
 )
 
 type Dialer struct {
-	opts    dialOptions
-	conn     *Conn
-	address  string
-	receiver Receiver
-	wg       sync.WaitGroup
-	quit     *Event
+	opts        dialOptions
+	conn        *Conn
+	address     string
+	newReceiver func() Receiver
+	wg          sync.WaitGroup
+	quit        *Event
 }
 
-func (d *Dialer) Dial() error {
+func (d *Dialer) dial() error {
 	var (
 		err  error
 		conn net.Conn
@@ -34,7 +35,7 @@ func (d *Dialer) Dial() error {
 		return err
 	}
 	d.conn = new(Conn)
-	err = d.conn.Init(conn, d.receiver)
+	err = d.conn.Init(conn, d.newReceiver())
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func (d *Dialer) Dial() error {
 	return nil
 }
 
-func (d *Dialer) ReConnect() error {
+func (d *Dialer) reConnect() error {
 	for {
 		select {
 		case <-d.conn.Done():
@@ -82,7 +83,7 @@ func (d *Dialer) ReConnect() error {
 				return nil
 			default:
 				retryTimes++
-				if err := d.Dial(); err != nil {
+				if err := d.dial(); err != nil {
 					log.Printf("reconnect %dth failed %v", retryTimes, err)
 					if retryTimes >= d.opts.maxRetryTimes { //达到重连次数上限,退出
 						return fmt.Errorf("reconnect %d times failed", retryTimes)
@@ -99,10 +100,10 @@ func (d *Dialer) ReConnect() error {
 
 //外部调用接口
 func (d *Dialer) Start() error {
-	if err := d.Dial(); err != nil {
+	if err := d.dial(); err != nil {
 		return err
 	}
-	go d.ReConnect()
+	go d.reConnect()
 	return nil
 }
 
@@ -113,4 +114,8 @@ func (d *Dialer) Shutdown() error {
 		err = nil
 	}
 	return err
+}
+
+func (d *Dialer) Send(b []byte) {
+	d.conn.Send(b)
 }

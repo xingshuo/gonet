@@ -41,6 +41,11 @@ func (s *Server) OnMessage(sender gonet.Sender, b []byte) (n int, err error) {
 	return n, nil
 }
 
+func (s *Server) OnClosed(sender gonet.Sender) error {
+	log.Print("Disconnect!\n")
+	return nil
+}
+
 func handleSignal(l *gonet.Listener) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
@@ -50,7 +55,10 @@ func handleSignal(l *gonet.Listener) {
 }
 
 func main() {
-	l,err := gonet.NewListener(":5051", &Server{rspSeq: 1})
+	newReceiver := func() gonet.Receiver {
+		return &Server{rspSeq: 1}
+	}
+	l,err := gonet.NewListener(":5051", newReceiver)
 	if err != nil {
 		log.Fatalf("new listener failed:%v\n", err)
 	}

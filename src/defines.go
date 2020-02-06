@@ -16,8 +16,13 @@ type Sender interface {
 
 //流事件接收器
 type Receiver interface {
-	OnConnected(s Sender) error //连接建立
+	//连接建立后
+	OnConnected(s Sender) error
+
 	//接收流消息,返回已经处理的n个字节流和异常信息,发生异常会关闭连接
 	//当返回n > 0,Conn会主动Pop掉n字节的缓存,接口内部无需处理
 	OnMessage(s Sender, b []byte) (n int, err error)
+
+	//连接断开前
+	OnClosed(s Sender) error
 }
